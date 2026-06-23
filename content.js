@@ -107,6 +107,21 @@ async function handleAcceptedSubmission() {
     // Small delay to let LeetCode render runtime/memory
     await sleep(1500);
 
+    // ── FIX: Re-verify it is still "Accepted" after delay ──
+    // This prevents false positives where an old "Accepted" state
+    // flashes temporarily while loading a new "Wrong Answer" submission.
+    const resultEl = document.querySelector('[data-e2e-locator="submission-result"]') ||
+                     document.querySelector('.text-green-s') ||
+                     document.querySelector('.result__1l9i') ||
+                     document.querySelector('.text-success');
+    
+    const isStillAccepted = resultEl && resultEl.textContent.trim() === 'Accepted';
+    
+    if (!isStillAccepted) {
+      console.log('[GitGrind] False positive: verdict is no longer "Accepted". Aborting.');
+      return;
+    }
+
     // Check settings
     const settings = await sendMessage({ type: 'GET_SETTINGS' });
     if (!settings.githubToken) {
@@ -178,14 +193,15 @@ function extractSolutionData() {
     const topics = extractTopics();
     const language = extractLanguage();
     const { runtime, memory } = extractRuntimeMemory();
+    const problemStatement = extractProblemStatement();
 
     if (!code) {
       console.error('[GitGrind] Could not extract code');
       return null;
     }
 
-    const payload = { slug, code, title, number, difficulty, topics, language, runtime, memory };
-    console.log('[GitGrind] Extracted payload:', { slug, title, number, difficulty, language });
+    const payload = { slug, code, title, number, difficulty, topics, language, runtime, memory, problemStatement };
+    console.log('[GitGrind] Extracted payload:', { slug, title, number, difficulty, language, hasStatement: !!problemStatement });
     return payload;
 
   } catch (err) {
@@ -406,6 +422,27 @@ function extractRuntimeMemory() {
   if (memoryMatch) memory = memoryMatch[1].trim();
 
   return { runtime, memory };
+}
+
+/**
+ * Extract problem statement (raw HTML)
+ */
+function extractProblemStatement() {
+  const selectors = [
+    '[data-track-load="description_content"]',
+    '.elfjS',
+    '[class*="question-content"]',
+    '.description__24sA'
+  ];
+
+  for (const sel of selectors) {
+    const el = document.querySelector(sel);
+    if (el && el.innerHTML) {
+      return el.innerHTML.trim();
+    }
+  }
+
+  return 'Problem statement not found.';
 }
 
 // ─────────────────────────────────────────

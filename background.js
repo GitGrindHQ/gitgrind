@@ -510,22 +510,35 @@ async function handlePushSolution(payload) {
   const fileHeader    = buildFileHeader(commentStyle, { ...payload, solvedDate });
   const fileContent   = `${fileHeader}\n\n${finalCode}\n`;
 
-  // File path: problems/{difficulty}/{####}-{slug}.{ext}
+  // File path: problems/{difficulty}/{####}-{slug}/
   const difficulty   = payload.difficulty.toLowerCase();
   const paddedNumber = String(payload.number).padStart(4, '0');
-  const filePath     = `problems/${difficulty}/${paddedNumber}-${payload.slug}.${fileExtension}`;
+  const basePath     = `problems/${difficulty}/${paddedNumber}-${payload.slug}`;
+  const codeFilePath = `${basePath}/${payload.slug}.${fileExtension}`;
+  const readmePath   = `${basePath}/README.md`;
 
-  const pushResult = await pushFileToGitHub(
-    settings.githubToken, owner, repo, filePath, fileContent, commitMessage
-  );
+  // Problem statement markdown
+  const readmeContent = `# ${payload.title}
 
-  if (!pushResult.success) throw new Error(pushResult.error || 'Push failed');
+<h2><a href="https://leetcode.com/problems/${payload.slug}/">Original LeetCode Problem</a></h2>
 
-  await updateStats(payload, pushResult.url);
+${payload.problemStatement || 'Problem statement not found.'}
+`;
+
+  // Push both files concurrently
+  const [pushResultCode, pushResultReadme] = await Promise.all([
+    pushFileToGitHub(settings.githubToken, owner, repo, codeFilePath, fileContent, commitMessage),
+    pushFileToGitHub(settings.githubToken, owner, repo, readmePath, readmeContent, commitMessage)
+  ]);
+
+  if (!pushResultCode.success) throw new Error(pushResultCode.error || 'Code push failed');
+  if (!pushResultReadme.success) console.warn('[GitGrind] README push failed:', pushResultReadme.error);
+
+  await updateStats(payload, pushResultCode.url);
   sendNotification('✅ Pushed to GitHub!', `${payload.title} → ${settings.repoFullName}`);
 
-  console.log('[GitGrind] Push successful:', pushResult.url);
-  return { success: true, url: pushResult.url, commitMessage, filePath };
+  console.log('[GitGrind] Push successful:', pushResultCode.url);
+  return { success: true, url: pushResultCode.url, commitMessage, filePath: codeFilePath };
 }
 
 // ─────────────────────────────────────────
