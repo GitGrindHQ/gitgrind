@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitGrind — Setup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="onboarding.css" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <!-- ─── STEP 1: WELCOME ─── -->
+  <div class="step active" id="step-welcome">
+    <div class="card card-welcome">
+      <div class="logo-wrap">
+        <div class="logo-icon">⚡</div>
+        <h1 class="logo-text">GitGrind</h1>
+      </div>
+      <p class="tagline">Your LeetCode grind, on GitHub.<br/>Automatically.</p>
+      <div class="feature-pills">
+        <span class="pill">🤖 AI Commit Messages</span>
+        <span class="pill">📊 Streak Tracking</span>
+        <span class="pill">🔥 Topic Analytics</span>
+        <span class="pill">💀 Roast My Solution</span>
+      </div>
+      <button class="btn btn-primary btn-lg" id="btn-start">
+        Get Started
+        <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+      <p class="sub-text">Takes about 60 seconds to set up</p>
+    </div>
+  </div>
+
+  <!-- ─── STEP 2: CONNECT GITHUB (OAuth) ─── -->
+  <div class="step" id="step-github">
+    <div class="card">
+      <div class="step-header">
+        <div class="step-badge">Step 1 of 3</div>
+        <div class="step-icon">🐙</div>
+        <h2>Connect GitHub</h2>
+        <p class="step-desc">
+          Click the button below. A GitHub authorization window will open —
+          sign in, approve access, and you're done. No token copying needed.
+        </p>
+      </div>
+
+      <!-- Default: Connect button -->
+      <div id="oauth-default">
+        <div class="oauth-info-box">
+          <div class="oauth-info-row">
+            <span class="oauth-info-icon">🔒</span>
+            <span>GitGrind only requests <strong>repo</strong> access to push your solutions</span>
+          </div>
+          <div class="oauth-info-row">
+            <span class="oauth-info-icon">🚫</span>
+            <span>We never read your private code or store your token anywhere except your browser</span>
+          </div>
+          <div class="oauth-info-row">
+            <span class="oauth-info-icon">⚡</span>
+            <span>One click — no token copying, no manual steps</span>
+          </div>
+        </div>
+
+        <button class="btn btn-github-oauth" id="btn-connect-github">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="github-icon">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          Connect with GitHub
+        </button>
+      </div>
+
+      <!-- Loading: while OAuth window is open -->
+      <div id="oauth-loading" style="display:none">
+        <div class="oauth-loading-box">
+          <div class="oauth-spinner-wrap">
+            <div class="spinner-ring"></div>
+          </div>
+          <div class="oauth-loading-title">Waiting for GitHub…</div>
+          <div class="oauth-loading-sub">Complete the authorization in the popup window</div>
+        </div>
+      </div>
+
+      <!-- Success: user authenticated -->
+      <div id="oauth-success" style="display:none">
+        <div class="oauth-success-box">
+          <img class="oauth-avatar" id="oauth-avatar" src="" alt="GitHub avatar" />
+          <div class="oauth-success-info">
+            <div class="oauth-success-name" id="oauth-name"></div>
+            <div class="oauth-success-handle" id="oauth-handle"></div>
+          </div>
+          <div class="oauth-check">✅</div>
+        </div>
+      </div>
+
+      <!-- Error state -->
+      <div class="error-msg" id="error-github" style="display:none"></div>
+
+      <!-- Retry button (shown only on error) -->
+      <button class="btn btn-outline" id="btn-retry-oauth" style="display:none;width:100%;margin-top:12px">
+        Try Again
+      </button>
+
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn btn-ghost" id="btn-back-welcome">← Back</button>
+        <button class="btn btn-primary" id="btn-github-next" disabled>
+          Continue →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STEP 3: SELECT REPO ─── -->
+  <div class="step" id="step-repo">
+    <div class="card">
+      <div class="step-header">
+        <div class="step-badge">Step 2 of 3</div>
+        <div class="step-icon">📁</div>
+        <h2>Choose Repository</h2>
+        <p class="step-desc">Select where your solutions will be pushed, or create a new one.</p>
+      </div>
+
+      <div class="create-repo-section">
+        <button class="btn btn-outline btn-sm" id="btn-show-create">+ Create new repo</button>
+        <div id="create-repo-form" style="display:none;margin-top:12px">
+          <div class="input-wrap">
+            <input type="text" id="input-new-repo" class="text-input" placeholder="leetcode-solutions" />
+          </div>
+          <button class="btn btn-outline btn-sm" id="btn-create-repo" style="margin-top:8px">
+            Create &amp; Select
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"><span>or choose existing</span></div>
+
+      <div class="input-group">
+        <div class="input-wrap">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" id="repo-search" class="text-input has-icon" placeholder="Search repositories…" />
+        </div>
+      </div>
+
+      <div class="repo-list" id="repo-list">
+        <div class="repo-loading"><div class="spinner"></div><span>Loading repositories…</span></div>
+      </div>
+
+      <div class="selected-repo-bar" id="selected-repo-bar" style="display:none">
+        <span class="selected-repo-icon">📁</span>
+        <span id="selected-repo-name"></span>
+        <button class="chip-close" id="btn-deselect-repo">×</button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btn-back-github">← Back</button>
+        <button class="btn btn-primary" id="btn-next-gemini" disabled>Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STEP 4: GEMINI AI (OPTIONAL) ─── -->
+  <div class="step" id="step-gemini">
+    <div class="card">
+      <div class="step-header">
+        <div class="step-badge">Step 3 of 3</div>
+        <div class="step-icon">🤖</div>
+        <h2>Enable AI Features</h2>
+        <p class="step-desc">Add your free Gemini API key to unlock AI commit messages, code comments, and "Roast my solution".</p>
+      </div>
+
+      <div class="ai-features-preview">
+        <div class="ai-feature">
+          <div class="ai-feature-icon">✍️</div>
+          <div>
+            <div class="ai-feature-title">Smart Commit Messages</div>
+            <div class="ai-feature-sub">"solve(medium): lru-cache | hashmap+dll | O(1) time"</div>
+          </div>
+        </div>
+        <div class="ai-feature">
+          <div class="ai-feature-icon">💬</div>
+          <div>
+            <div class="ai-feature-title">Inline Code Comments</div>
+            <div class="ai-feature-sub">AI explains your approach in the file</div>
+          </div>
+        </div>
+        <div class="ai-feature">
+          <div class="ai-feature-icon">💀</div>
+          <div>
+            <div class="ai-feature-title">Roast My Solution</div>
+            <div class="ai-feature-sub">Harsh but fair AI code review with better alternatives</div>
+          </div>
+        </div>
+      </div>
+
+      <a class="btn btn-outline btn-sm" href="https://aistudio.google.com/app/apikey" target="_blank" style="margin-bottom:16px;display:inline-flex">
+        🔑 Get Free Gemini API Key →
+      </a>
+
+      <div class="input-group">
+        <label class="input-label">
+          Gemini API Key
+          <span class="optional-badge">Optional</span>
+        </label>
+        <div class="input-wrap">
+          <input type="password" id="input-gemini" class="text-input" placeholder="AIzaSy…" autocomplete="off" />
+          <button class="input-toggle" id="btn-toggle-gemini" title="Show/hide key">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="gemini-status" id="gemini-status" style="display:none"></div>
+      <div class="error-msg" id="error-gemini" style="display:none"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btn-skip-gemini">Skip for now</button>
+        <button class="btn btn-primary" id="btn-verify-gemini">
+          <span id="gemini-verify-text">Verify &amp; Finish</span>
+          <span class="spinner" id="gemini-spinner" style="display:none"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── STEP 5: DONE ─── -->
+  <div class="step" id="step-done">
+    <div class="card card-done">
+      <canvas id="confetti-canvas"></canvas>
+      <div class="done-icon">🎉</div>
+      <h2 class="done-title">You're all set!</h2>
+      <p class="done-desc">GitGrind is ready. Your next accepted LeetCode solution will be automatically pushed to GitHub.</p>
+
+      <div class="done-summary" id="done-summary">
+        <div class="summary-item">
+          <span class="summary-label">GitHub</span>
+          <span class="summary-value" id="summary-user"></span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Repository</span>
+          <span class="summary-value" id="summary-repo"></span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">AI Features</span>
+          <span class="summary-value" id="summary-ai"></span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" id="btn-finish">
+        Start Grinding! ⚡
+      </button>
+      <p class="sub-text" style="margin-top:12px">Head to LeetCode and solve a problem!</p>
+    </div>
+  </div>
+
+  <!-- Progress dots -->
+  <div class="progress-dots" id="progress-dots" style="display:none">
+    <div class="dot active" data-step="0"></div>
+    <div class="dot" data-step="1"></div>
+    <div class="dot" data-step="2"></div>
+    <div class="dot" data-step="3"></div>
+  </div>
+
+  <script src="lib/confetti.js"></script>
+  <script src="onboarding.js"></script>
+</body>
+</html>

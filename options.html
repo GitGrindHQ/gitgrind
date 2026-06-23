@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitGrind — Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="bg-mesh"></div>
+
+  <div class="layout">
+    <!-- ─── SIDEBAR ─── -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">⚡</div>
+        <span class="logo-text">GitGrind</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-section="github" id="nav-github">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="nav-icon">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          GitHub
+        </a>
+        <a class="nav-item" data-section="ai" id="nav-ai">
+          <span class="nav-icon-emoji">🤖</span>
+          AI Features
+        </a>
+        <a class="nav-item" data-section="preferences" id="nav-preferences">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="nav-icon">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          Preferences
+        </a>
+        <a class="nav-item" data-section="stats" id="nav-stats">
+          <span class="nav-icon-emoji">📊</span>
+          Statistics
+        </a>
+      </nav>
+      <div class="sidebar-version">v1.0.0</div>
+    </aside>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="main">
+
+      <!-- ── GITHUB SECTION ── -->
+      <section class="section active" id="section-github">
+        <div class="section-header">
+          <h1>GitHub Connection</h1>
+          <p>Manage your GitHub account and target repository.</p>
+        </div>
+
+        <!-- Connected account card -->
+        <div class="settings-card" id="card-connected" style="display:none">
+          <div class="card-title">Connected Account</div>
+          <div class="connected-user" id="connected-user">
+            <img class="user-avatar" id="gh-avatar" src="" alt="avatar" />
+            <div>
+              <div class="user-name" id="gh-username"></div>
+              <div class="user-meta" id="gh-meta"></div>
+            </div>
+            <div class="connected-check">✅ Connected</div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+            <button class="btn btn-outline" id="btn-reconnect-oauth">
+              🔄 Switch Account
+            </button>
+            <button class="btn btn-danger" id="btn-disconnect">
+              Disconnect
+            </button>
+          </div>
+        </div>
+
+        <!-- Not connected card -->
+        <div class="settings-card" id="card-not-connected">
+          <div class="card-title">Connect GitHub</div>
+          <p class="field-desc" style="margin-bottom:16px">
+            Sign in with GitHub to allow GitGrind to push your solutions. We only request <code>repo</code> and <code>read:user</code> access.
+          </p>
+          <button class="btn btn-github-opts" id="btn-connect-opts">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            Connect with GitHub
+          </button>
+          <div class="oauth-result" id="oauth-result" style="display:none"></div>
+        </div>
+
+        <!-- Repository selection card -->
+        <div class="settings-card" id="card-repo" style="display:none">
+          <div class="card-title">Target Repository</div>
+          <p class="field-desc" style="margin-bottom:12px">
+            Solutions will be pushed here. Current: <strong id="current-repo-display">None</strong>
+          </p>
+          <div class="field-group">
+            <div class="input-wrap">
+              <input type="text" id="inp-repo" class="text-input" placeholder="username/leetcode-solutions" />
+            </div>
+            <div class="field-desc" style="margin-top:6px">
+              Enter your repo's full name (e.g. <code>vansh/leetcode-solutions</code>) or
+              <button class="link-btn" id="btn-browse-repos">browse your repos →</button>
+            </div>
+          </div>
+          <div class="repo-browser" id="repo-browser" style="display:none">
+            <div class="input-wrap" style="margin-bottom:8px">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input type="text" id="repo-browser-search" class="text-input has-icon" placeholder="Search your repos…" />
+            </div>
+            <div class="repo-browser-list" id="repo-browser-list">
+              <div style="text-align:center;padding:16px;color:var(--text-muted)">Loading…</div>
+            </div>
+          </div>
+          <div class="field-actions" style="margin-top:12px">
+            <button class="btn btn-primary" id="btn-save-repo">Save Repository</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── AI SECTION ── -->
+      <section class="section" id="section-ai">
+        <div class="section-header">
+          <h1>AI Features</h1>
+          <p>Powered by Google Gemini 1.5 Flash (free tier — 15 req/min, 1M tokens/day).</p>
+        </div>
+
+        <div class="settings-card">
+          <div class="field-group">
+            <label class="field-label">Gemini API Key</label>
+            <div class="field-desc"><a href="https://aistudio.google.com/app/apikey" target="_blank">Get a free key →</a></div>
+            <div class="input-wrap">
+              <input type="password" id="inp-gemini" class="text-input" placeholder="AIzaSy…" autocomplete="off" />
+              <button class="input-toggle" id="toggle-gemini">👁</button>
+            </div>
+          </div>
+          <div class="field-actions">
+            <button class="btn btn-outline" id="btn-test-gemini">Test Gemini</button>
+            <div class="test-result" id="test-gemini-result" style="display:none"></div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="card-title">AI Settings</div>
+          <div class="toggle-list">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">AI Commit Messages</div>
+                <div class="toggle-desc">Auto-generate smart commit messages with approach + complexity</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-ai-commits" />
+                <span class="toggle-thumb"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Inline Code Comments</div>
+                <div class="toggle-desc">AI adds explanatory comments to your code before pushing</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-ai-comments" />
+                <span class="toggle-thumb"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="card-title">Custom Commit Template</div>
+          <div class="field-desc" style="margin-bottom:10px">
+            Used when AI is disabled. Variables: <code>{difficulty}</code> <code>{slug}</code> <code>{topics}</code> <code>{problem}</code> <code>{number}</code>
+          </div>
+          <div class="input-wrap">
+            <input type="text" id="inp-commit-template" class="text-input" placeholder="solve({difficulty}): {slug} | {topics}" />
+          </div>
+        </div>
+      </section>
+
+      <!-- ── PREFERENCES SECTION ── -->
+      <section class="section" id="section-preferences">
+        <div class="section-header">
+          <h1>Preferences</h1>
+          <p>Customize how GitGrind behaves.</p>
+        </div>
+        <div class="settings-card">
+          <div class="card-title">Behavior</div>
+          <div class="toggle-list">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Auto-push on Accept</div>
+                <div class="toggle-desc">Automatically push when LeetCode shows "Accepted"</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-auto-push" />
+                <span class="toggle-thumb"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">Show LinkedIn Button</div>
+                <div class="toggle-desc">Show "Share on LinkedIn" button in popup after a push</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-linkedin" />
+                <span class="toggle-thumb"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── STATS SECTION ── -->
+      <section class="section" id="section-stats">
+        <div class="section-header">
+          <h1>Statistics</h1>
+          <p>Your LeetCode progress tracked locally in your browser.</p>
+        </div>
+        <div class="stats-overview" id="stats-overview">
+          <div class="overview-card"><div class="overview-val" id="ov-total">0</div><div class="overview-label">Total Solved</div></div>
+          <div class="overview-card"><div class="overview-val green" id="ov-easy">0</div><div class="overview-label">Easy</div></div>
+          <div class="overview-card"><div class="overview-val yellow" id="ov-medium">0</div><div class="overview-label">Medium</div></div>
+          <div class="overview-card"><div class="overview-val red" id="ov-hard">0</div><div class="overview-label">Hard</div></div>
+          <div class="overview-card"><div class="overview-val accent" id="ov-streak">0</div><div class="overview-label">Day Streak 🔥</div></div>
+          <div class="overview-card"><div class="overview-val" id="ov-week">0</div><div class="overview-label">This Week</div></div>
+        </div>
+        <div class="settings-card">
+          <div class="card-title">Topic Breakdown</div>
+          <div class="topics-table" id="topics-table">
+            <div class="topics-empty">No data yet. Solve some problems!</div>
+          </div>
+        </div>
+        <div class="settings-card danger-zone">
+          <div class="card-title red">Danger Zone</div>
+          <p class="field-desc" style="margin-bottom:12px">Reset all local stats. GitHub pushes are not affected.</p>
+          <button class="btn btn-danger" id="btn-reset-stats">Reset Statistics</button>
+        </div>
+      </section>
+
+      <!-- Save bar -->
+      <div class="save-bar" id="save-bar" style="display:none">
+        <span class="save-hint">Unsaved changes</span>
+        <button class="btn btn-primary" id="btn-save">Save Changes</button>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast" style="display:none"></div>
+    </main>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
