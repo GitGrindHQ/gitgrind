@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 function setupNavigation() {
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', e => {
+      // Allow normal links (like GitHub Issues or email) to open properly
+      if (item.hasAttribute('href')) return;
+      
       e.preventDefault();
       activateSection(item.dataset.section);
     });
