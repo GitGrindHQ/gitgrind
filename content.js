@@ -7,6 +7,81 @@
 console.log('[GitGrind] Content script loaded on:', window.location.href);
 
 // ─────────────────────────────────────────
+// PLATFORMS REGISTRY
+// ─────────────────────────────────────────
+const PLATFORMS = {
+  leetcode: {
+    matches: (url) => url.includes('leetcode.com/problems/'),
+    checkForAccepted: (node) => {
+      const selectors = ['[data-e2e-locator="submission-result"]', '.text-green-s', '[class*="accepted"]', '[class*="Accepted"]', '.result__1l9i', '[class*="success"]'];
+      for (const sel of selectors) {
+        const el = node.matches?.(sel) ? node : node.querySelector?.(sel);
+        if (el && el.textContent.trim() === 'Accepted') return true;
+      }
+      if (node.textContent?.trim() === 'Accepted' && (node.className?.includes('green') || node.className?.includes('success') || node.className?.includes('accept'))) return true;
+      return false;
+    },
+    verifyAccepted: () => {
+      const el = document.querySelector('[data-e2e-locator="submission-result"]') || document.querySelector('.text-green-s') || document.querySelector('.result__1l9i') || document.querySelector('.text-success');
+      return el && el.textContent.trim() === 'Accepted';
+    }
+  },
+  geeksforgeeks: {
+    matches: (url) => url.includes('geeksforgeeks.org/problems/'),
+    checkForAccepted: (node) => {
+      const text = node.textContent?.trim() || '';
+      return text.includes('Problem Solved Successfully') || text.includes('Correct Answer');
+    },
+    verifyAccepted: () => {
+      return document.body.textContent.includes('Problem Solved Successfully') || document.body.textContent.includes('Correct Answer');
+    },
+    extractSolutionData: () => {
+      const slug = window.location.pathname.split('/').filter(Boolean).pop() || 'gfg-problem';
+      const titleEl = document.querySelector('h3');
+      const title = titleEl ? titleEl.textContent.trim() : slug;
+      let code = '';
+      try {
+        const lines = document.querySelectorAll('.ace_line, .view-line');
+        if (lines.length) code = Array.from(lines).map(line => line.textContent).join('\n');
+      } catch (e) {}
+      
+      const statementEl = document.querySelector('[class*="problems_problem_content"]');
+      const problemStatement = statementEl ? statementEl.innerHTML : '';
+      
+      return { slug, code, title, number: 'GFG', difficulty: 'Medium', topics: [], language: 'cpp', runtime: '', memory: '', problemStatement, problemUrl: window.location.href.split('?')[0] };
+    }
+  },
+  hackerrank: {
+    matches: (url) => url.includes('hackerrank.com/challenges/'),
+    checkForAccepted: (node) => {
+      const text = node.textContent?.trim() || '';
+      return text.includes('Congratulations!') && text.includes('You solved this challenge');
+    },
+    verifyAccepted: () => {
+      return document.querySelector('.congrats-heading') !== null;
+    },
+    extractSolutionData: () => {
+      const slug = window.location.pathname.split('/').filter(Boolean)[1] || 'hackerrank-problem';
+      const titleEl = document.querySelector('.page-label');
+      const title = titleEl ? titleEl.textContent.trim() : slug;
+      
+      let code = '';
+      try {
+        const lines = document.querySelectorAll('.CodeMirror-line');
+        if (lines.length) code = Array.from(lines).map(line => line.textContent).join('\n');
+      } catch (e) {}
+      
+      const statementEl = document.querySelector('.challenge-body-html');
+      const problemStatement = statementEl ? statementEl.innerHTML : '';
+      
+      return { slug, code, title, number: 'HR', difficulty: 'Medium', topics: [], language: 'python', runtime: '', memory: '', problemStatement, problemUrl: window.location.href.split('?')[0] };
+    }
+  }
+};
+
+const currentPlatform = Object.values(PLATFORMS).find(p => p.matches(window.location.href)) || PLATFORMS.leetcode;
+
+// ─────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────
 let lastPushedSubmissionId = null;
@@ -45,7 +120,7 @@ function startObserver() {
         if (node.nodeType !== Node.ELEMENT_NODE) continue;
 
         const text = node.textContent || '';
-        const isAccepted = checkForAccepted(node);
+        const isAccepted = currentPlatform.checkForAccepted(node);
 
         if (isAccepted) {
           console.log('[GitGrind] Accepted verdict detected!');
@@ -65,34 +140,7 @@ function startObserver() {
   console.log('[GitGrind] MutationObserver started');
 }
 
-/**
- * Check if a DOM node contains an "Accepted" verdict
- */
-function checkForAccepted(node) {
-  // LeetCode uses various selectors — check multiple patterns
-  const selectors = [
-    '[data-e2e-locator="submission-result"]',
-    '.text-green-s',
-    '[class*="accepted"]',
-    '[class*="Accepted"]',
-    '.result__1l9i',
-    '[class*="success"]'
-  ];
-
-  for (const sel of selectors) {
-    const el = node.matches?.(sel) ? node : node.querySelector?.(sel);
-    if (el && el.textContent.trim() === 'Accepted') return true;
-  }
-
-  // Fallback: check if the node itself has text "Accepted"
-  if (node.textContent?.trim() === 'Accepted' &&
-    (node.className?.includes('green') || node.className?.includes('success') ||
-      node.className?.includes('accept'))) {
-    return true;
-  }
-
-  return false;
-}
+// (Moved checkForAccepted logic into PLATFORMS registry)
 
 // ─────────────────────────────────────────
 // HANDLE ACCEPTED SUBMISSION
@@ -110,12 +158,7 @@ async function handleAcceptedSubmission() {
     // ── FIX: Re-verify it is still "Accepted" after delay ──
     // This prevents false positives where an old "Accepted" state
     // flashes temporarily while loading a new "Wrong Answer" submission.
-    const resultEl = document.querySelector('[data-e2e-locator="submission-result"]') ||
-                     document.querySelector('.text-green-s') ||
-                     document.querySelector('.result__1l9i') ||
-                     document.querySelector('.text-success');
-    
-    const isStillAccepted = resultEl && resultEl.textContent.trim() === 'Accepted';
+    const isStillAccepted = currentPlatform.verifyAccepted();
     
     if (!isStillAccepted) {
       console.log('[GitGrind] False positive: verdict is no longer "Accepted". Aborting.');
@@ -181,9 +224,14 @@ async function handleAcceptedSubmission() {
 // ─────────────────────────────────────────
 
 /**
- * Extract all solution data from the LeetCode page
+ * Extract all solution data from the page by delegating to the current platform strategy
  */
 function extractSolutionData() {
+  if (currentPlatform.extractSolutionData) {
+    return currentPlatform.extractSolutionData();
+  }
+
+  // Fallback to old LeetCode hardcoded logic (since it relies on all the global helper functions below)
   try {
     const slug = getSlug();
     const code = extractCode();
@@ -200,7 +248,7 @@ function extractSolutionData() {
       return null;
     }
 
-    const payload = { slug, code, title, number, difficulty, topics, language, runtime, memory, problemStatement };
+    const payload = { slug, code, title, number, difficulty, topics, language, runtime, memory, problemStatement, problemUrl: `https://leetcode.com/problems/${slug}/` };
     console.log('[GitGrind] Extracted payload:', { slug, title, number, difficulty, language, hasStatement: !!problemStatement });
     return payload;
 

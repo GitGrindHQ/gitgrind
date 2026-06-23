@@ -518,9 +518,10 @@ async function handlePushSolution(payload) {
   const readmePath   = `${basePath}/README.md`;
 
   // Problem statement markdown
+  const problemUrl = payload.problemUrl || `https://leetcode.com/problems/${payload.slug}/`;
   const readmeContent = `# ${payload.title}
 
-<h2><a href="https://leetcode.com/problems/${payload.slug}/">Original LeetCode Problem</a></h2>
+<h2><a href="${problemUrl}">Original Problem</a></h2>
 
 ${payload.problemStatement || 'Problem statement not found.'}
 `;
@@ -535,6 +536,9 @@ ${payload.problemStatement || 'Problem statement not found.'}
   if (!pushResultReadme.success) console.warn('[GitGrind] README push failed:', pushResultReadme.error);
 
   await updateStats(payload, pushResultCode.url);
+  // Cache the full payload so the popup can use it for the "Roast" feature
+  await chrome.storage.local.set({ gitgrind_last_payload: payload });
+
   sendNotification('✅ Pushed to GitHub!', `${payload.title} → ${settings.repoFullName}`);
 
   console.log('[GitGrind] Push successful:', pushResultCode.url);

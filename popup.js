@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkForRecentPush(stats);
   }
 
-  setupButtons(settings, stats);
+  const { gitgrind_last_payload: lastPayload } = await chrome.storage.local.get('gitgrind_last_payload');
+  setupButtons(settings, stats, lastPayload);
 });
 
 // ─────────────────────────────────────────
@@ -176,7 +177,7 @@ function checkForRecentPush(stats) {
 // BUTTON SETUP
 // ─────────────────────────────────────────
 
-function setupButtons(settings, stats) {
+function setupButtons(settings, stats, lastPayload) {
   // Settings button → open options page
   document.getElementById('btn-settings').addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
@@ -206,6 +207,29 @@ function setupButtons(settings, stats) {
     } catch {
       showPopupToast('⚠️ GitGrind is not active on this page. Refresh and try again.');
     }
+  });
+
+  // Roast button
+  const roastBtn = document.getElementById('btn-roast');
+  if (lastPayload && settings.geminiKey) {
+    roastBtn.style.display = 'inline-flex';
+    roastBtn.addEventListener('click', async () => {
+      const modal = document.getElementById('roast-modal');
+      const content = document.getElementById('roast-content');
+      modal.style.display = 'flex';
+      content.innerHTML = '<div style="text-align:center;padding:20px;">Fetching roast... 🔥</div>';
+
+      const res = await sendMessage({ type: 'ROAST_SOLUTION', payload: lastPayload });
+      if (res.success) {
+        content.innerHTML = parseMarkdown(res.roast);
+      } else {
+        content.innerHTML = `<div style="color:#ef4444">Error: ${res.error}</div>`;
+      }
+    });
+  }
+
+  document.getElementById('btn-close-roast').addEventListener('click', () => {
+    document.getElementById('roast-modal').style.display = 'none';
   });
 
   // LinkedIn button
@@ -254,4 +278,27 @@ function sendMessage(msg) {
       resolve(response || {});
     });
   });
+}
+
+function parseMarkdown(md) {
+  if (!md) return '';
+  return md
+    // Headers
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    // Bold
+    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+    // Code blocks
+    .replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
+    // Inline code
+    .replace(/`(.*?)`/gim, '<code>$1</code>')
+    // Lists
+    .replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>')
+    // Fix adjacent lists
+    .replace(/<\/ul>\n<ul>/gim, '')
+    // Newlines
+    .replace(/\n/gim, '<br/>');
 }
