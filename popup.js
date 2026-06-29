@@ -38,6 +38,7 @@ function showDashboard(settings, stats) {
   document.getElementById('dashboard').style.display = 'block';
 
   renderStreak(stats);
+  renderGoal(settings, stats);
   renderStats(stats);
   renderTopics(stats);
   renderRecentProblems(stats);
@@ -50,8 +51,25 @@ function showDashboard(settings, stats) {
 
 function renderStreak(stats) {
   document.getElementById('streak-count').textContent = stats.streak || 0;
-  document.getElementById('this-week').textContent = `${stats.thisWeek || 0} this week`;
+  document.getElementById('streak-longest').textContent = `${stats.longestStreak || 0} longest`;
   document.getElementById('this-month').textContent = `${stats.thisMonth || 0} this month`;
+}
+
+function renderGoal(settings, stats) {
+  if (!settings.dailyGoal) return;
+  const banner = document.getElementById('goal-banner');
+  banner.style.display = 'block';
+  
+  const today = new Date().toISOString().split('T')[0];
+  const count = stats.lastSolvedDate === today ? (stats.todaySolved || 0) : 0;
+  const goal = settings.dailyGoal;
+  
+  document.getElementById('goal-text').textContent = `${count} / ${goal} Problems`;
+  
+  const pct = Math.min(100, Math.round((count / goal) * 100));
+  setTimeout(() => {
+    document.getElementById('goal-bar-fill').style.width = `${pct}%`;
+  }, 100);
 }
 
 function renderStats(stats) {
@@ -211,7 +229,7 @@ function setupButtons(settings, stats, lastPayload) {
 
   // Roast button
   const roastBtn = document.getElementById('btn-roast');
-  if (lastPayload && settings.geminiKey) {
+  if (lastPayload && settings.groqKey) {
     roastBtn.style.display = 'inline-flex';
     roastBtn.addEventListener('click', async () => {
       const modal = document.getElementById('roast-modal');

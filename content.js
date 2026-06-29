@@ -85,112 +85,54 @@ const currentPlatform = Object.values(PLATFORMS).find(p => p.matches(window.loca
 // STATE
 // ─────────────────────────────────────────
 let lastPushedSubmissionId = null;
-let floatingBtn = null;
 let isProcessing = false;
 
 // ─────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────
 (async function init() {
-  // Wait for DOM to be ready
-  await waitForElement('body', 5000);
-
-  // Inject floating ⚡ button
-  injectFloatingButton();
-
-  // Start observing for "Accepted" verdict
-  startObserver();
-
   console.log('[GitGrind] Initialized on problem page');
+  
+  // Periodically check and inject the button (for SPA navigation)
+  setInterval(() => {
+    injectHeaderButton();
+  }, 2000);
+  
+  injectHeaderButton();
 })();
-
-// ─────────────────────────────────────────
-// MUTATION OBSERVER — watch for "Accepted"
-// ─────────────────────────────────────────
-
-function startObserver() {
-  const observer = new MutationObserver(async (mutations) => {
-    if (isProcessing) return;
-
-    for (const mutation of mutations) {
-      if (mutation.addedNodes.length === 0) continue;
-
-      // Check if any added node contains "Accepted" text
-      for (const node of mutation.addedNodes) {
-        if (node.nodeType !== Node.ELEMENT_NODE) continue;
-
-        const text = node.textContent || '';
-        const isAccepted = currentPlatform.checkForAccepted(node);
-
-        if (isAccepted) {
-          console.log('[GitGrind] Accepted verdict detected!');
-          await handleAcceptedSubmission();
-          return;
-        }
-      }
-    }
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: false
-  });
-
-  console.log('[GitGrind] MutationObserver started');
-}
 
 // (Moved checkForAccepted logic into PLATFORMS registry)
 
 // ─────────────────────────────────────────
-// HANDLE ACCEPTED SUBMISSION
+// HANDLE MANUAL PUSH
 // ─────────────────────────────────────────
 
-async function handleAcceptedSubmission() {
+async function handleManualPush() {
   if (isProcessing) return;
-  isProcessing = true;
-  floatingBtn?.classList.add('gg-btn-loading');
-
+  const btnText = document.getElementById('gitgrind-btn-text');
+  
   try {
-    // Small delay to let LeetCode render runtime/memory
-    await sleep(1500);
-
-    // ── FIX: Re-verify it is still "Accepted" after delay ──
-    // This prevents false positives where an old "Accepted" state
-    // flashes temporarily while loading a new "Wrong Answer" submission.
-    const isStillAccepted = currentPlatform.verifyAccepted();
-    
-    if (!isStillAccepted) {
-      console.log('[GitGrind] False positive: verdict is no longer "Accepted". Aborting.');
-      return;
-    }
+    isProcessing = true;
+    if (btnText) btnText.textContent = 'Pushing...';
 
     // Check settings
     const settings = await sendMessage({ type: 'GET_SETTINGS' });
     if (!settings.githubToken) {
-      console.log('[GitGrind] Not configured, skipping auto-push');
       showToast('⚙️ GitGrind not set up yet. Click the extension icon.', 'warn');
-      return;
-    }
-
-    if (!settings.autoPush) {
-      console.log('[GitGrind] Auto-push disabled, showing manual button');
-      showToast('✅ Accepted! Click ⚡ to push to GitHub', 'info');
-      floatingBtn?.classList.add('gg-btn-ready');
       return;
     }
 
     // Extract solution data
     const payload = extractSolutionData();
-    if (!payload) {
-      showToast('⚠️ Could not extract solution. Try manual push.', 'warn');
+    if (!payload || !payload.code) {
+      showToast('⚠️ Could not extract code. Is there code in the editor?', 'warn');
       return;
     }
 
     // Prevent double-push of the same submission
     const submissionKey = `${payload.slug}-${payload.code.length}`;
     if (lastPushedSubmissionId === submissionKey) {
-      console.log('[GitGrind] Duplicate submission detected, skipping');
+      showToast('⚠️ This exact code is already pushed.', 'warn');
       return;
     }
     lastPushedSubmissionId = submissionKey;
@@ -201,21 +143,23 @@ async function handleAcceptedSubmission() {
 
     if (result.success) {
       showToast(`✅ Pushed! ${payload.title}`, 'success');
-      floatingBtn?.classList.add('gg-btn-success');
-      setTimeout(() => floatingBtn?.classList.remove('gg-btn-success'), 3000);
+      if (btnText) btnText.textContent = 'Pushed ✓';
+      setTimeout(() => { if (btnText) btnText.textContent = 'Push Code'; }, 3000);
 
       // Dispatch event so popup can update
       window.dispatchEvent(new CustomEvent('gitgrind-pushed', { detail: result }));
     } else {
       showToast(`❌ Push failed: ${result.error}`, 'error');
+      if (btnText) btnText.textContent = 'Push Failed';
     }
 
   } catch (err) {
     console.error('[GitGrind] Push error:', err);
     showToast(`❌ Error: ${err.message}`, 'error');
+    if (btnText) btnText.textContent = 'Error';
   } finally {
     isProcessing = false;
-    floatingBtn?.classList.remove('gg-btn-loading');
+    setTimeout(() => { if (btnText && btnText.textContent !== 'Pushed ✓') btnText.textContent = 'Push Code'; }, 3000);
   }
 }
 
@@ -248,7 +192,7 @@ function extractSolutionData() {
       return null;
     }
 
-    const payload = { slug, code, title, number, difficulty, topics, language, runtime, memory, problemStatement, problemUrl: `https://leetcode.com/problems/${slug}/` };
+    const payload = { slug, code, title, number, difficulty, topics, companies: [], sheets: [], contest: null, language, runtime, memory, problemStatement, problemUrl: `https://leetcode.com/problems/${slug}/` };
     console.log('[GitGrind] Extracted payload:', { slug, title, number, difficulty, language, hasStatement: !!problemStatement });
     return payload;
 
@@ -362,6 +306,37 @@ function extractTitle() {
  * Extract problem number from DOM or URL
  */
 function extractProblemNumber() {
+  // Strategy 1: Look for the title link that starts with a number and a dot
+  const links = document.querySelectorAll('a[href^="/problems/"]');
+  for (const link of links) {
+    const text = link.textContent.trim();
+    const match = text.match(/^(\d+)\.\s/);
+    if (match) {
+      return match[1];
+    }
+  }
+
+  // Strategy 2: Look for the title element in older UI
+  const titleEl = document.querySelector('[data-cy="question-title"]');
+  if (titleEl) {
+    const text = titleEl.textContent.trim();
+    const match = text.match(/^(\d+)\./);
+    if (match) return match[1];
+    
+    const parentText = titleEl.closest('[class*="title"]')?.textContent;
+    const parentMatch = parentText?.match(/^(\d+)\./);
+    if (parentMatch) return parentMatch[1];
+  }
+
+  // Strategy 3: Look for any h1 or h2 that might contain the title
+  const headers = document.querySelectorAll('h1, h2');
+  for (const h of headers) {
+    const text = h.textContent.trim();
+    const match = text.match(/^(\d+)\.\s/);
+    if (match) return match[1];
+  }
+
+  // Strategy 4: Fallback to old selectors with strict exact match
   const selectors = [
     '[class*="question-title"] + [class*="truncate"]',
     '.text-label-3',
@@ -371,19 +346,13 @@ function extractProblemNumber() {
   for (const sel of selectors) {
     const el = document.querySelector(sel);
     const text = el?.textContent?.trim();
-    const match = text?.match(/\d+/);
-    if (match) return match[0];
+    if (text) {
+      const match = text.match(/^(\d+)$/);
+      if (match) return match[1];
+    }
   }
 
-  // Fallback: try to get from title text that includes number
-  const titleEl = document.querySelector('[data-cy="question-title"]');
-  if (titleEl) {
-    const parentText = titleEl.closest('[class*="title"]')?.textContent;
-    const match = parentText?.match(/^(\d+)\./);
-    if (match) return match[1];
-  }
-
-  return '0';
+  return '0000';
 }
 
 /**
@@ -494,136 +463,79 @@ function extractProblemStatement() {
 }
 
 // ─────────────────────────────────────────
-// FLOATING BUTTON
+// HEADER BUTTON
 // ─────────────────────────────────────────
 
-/**
- * Inject the floating ⚡ push button into the page
- */
-function injectFloatingButton() {
-  if (floatingBtn) return;
+function injectHeaderButton() {
+  if (document.getElementById('gitgrind-push-btn')) return;
 
-  // Inject styles
-  const style = document.createElement('style');
-  style.textContent = `
-    .gg-float-btn {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #7c3aed, #a855f7);
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 4px 24px rgba(124, 58, 237, 0.5);
-      z-index: 999999;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-      outline: none;
+  const buttonSelectors = [
+    // 1. Top navigation center bar (next to Submit/Run/Timer) - Always visible, user requested location
+    () => {
+      const submitBtn = document.querySelector('[data-e2e-locator="console-submit-button"]');
+      if (submitBtn) {
+        // LeetCode wraps Run and Submit in their own inner flex container.
+        // We want the parent of that container (the main center action bar) so we don't break the layout.
+        return submitBtn.parentElement.parentElement;
+      }
+      
+      const anySubmit = Array.from(document.querySelectorAll('button')).find(b => b.textContent && b.textContent.trim() === 'Submit');
+      if (anySubmit) {
+        return anySubmit.parentElement.parentElement;
+      }
+      
+      return null;
+    },
+    // 2. Fallback: Next to "Ask Leet"
+    () => {
+      const btns = Array.from(document.querySelectorAll('div, button, span'));
+      const askLeet = btns.find(b => b.textContent && b.textContent.includes('Ask Leet') && b.children.length === 0);
+      if (askLeet) return askLeet.closest('.flex');
+      return null;
+    },
+    // 3. Fallback: Code editor header
+    () => {
+      const header = document.querySelector('[class*="editor-header"]');
+      if (header) return header.querySelector('.flex.items-center') || header;
+      return null;
     }
-    .gg-float-btn:hover {
-      transform: scale(1.12) translateY(-2px);
-      box-shadow: 0 8px 32px rgba(124, 58, 237, 0.7);
-    }
-    .gg-float-btn:active { transform: scale(0.95); }
-    .gg-float-btn.gg-btn-loading { animation: gg-pulse 1s infinite; }
-    .gg-float-btn.gg-btn-success { background: linear-gradient(135deg, #059669, #10b981); }
-    .gg-float-btn.gg-btn-ready { animation: gg-bounce 1s ease 2; }
+  ];
 
-    @keyframes gg-pulse {
-      0%, 100% { box-shadow: 0 4px 24px rgba(124, 58, 237, 0.5); }
-      50% { box-shadow: 0 4px 32px rgba(124, 58, 237, 0.9); transform: scale(1.05); }
-    }
-    @keyframes gg-bounce {
-      0%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-8px); }
-      60% { transform: translateY(-4px); }
-    }
+  let container = null;
+  for (const getContainer of buttonSelectors) {
+    container = getContainer();
+    if (container) break;
+  }
 
-    .gg-toast {
-      position: fixed;
-      bottom: 88px;
-      right: 24px;
-      background: #161b22;
-      border: 1px solid #30363d;
-      color: #e6edf3;
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      z-index: 999998;
-      max-width: 280px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      animation: gg-toast-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      border-left: 3px solid #7c3aed;
-    }
-    .gg-toast.success { border-left-color: #10b981; }
-    .gg-toast.error { border-left-color: #ef4444; }
-    .gg-toast.warn { border-left-color: #f59e0b; }
+  if (!container) return;
 
-    @keyframes gg-toast-in {
-      from { opacity: 0; transform: translateX(20px) scale(0.9); }
-      to { opacity: 1; transform: translateX(0) scale(1); }
-    }
-    @keyframes gg-toast-out {
-      from { opacity: 1; transform: translateX(0); }
-      to { opacity: 0; transform: translateX(20px); }
-    }
+  const btn = document.createElement('button');
+  btn.id = 'gitgrind-push-btn';
+  // Match LeetCode's top navigation bar aesthetics perfectly
+  btn.className = 'flex items-center justify-center gap-1.5 rounded bg-fill-secondary hover:bg-fill-secondary-hover text-text-secondary hover:text-text-primary text-sm font-medium transition-colors ml-2 px-3 py-1.5';
+  
+  btn.innerHTML = `
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+    </svg>
+    <span id="gitgrind-btn-text" class="text-sm">Push Code</span>
   `;
-  document.head.appendChild(style);
 
-  // Create button
-  floatingBtn = document.createElement('button');
-  floatingBtn.className = 'gg-float-btn';
-  floatingBtn.title = 'GitGrind — Push to GitHub';
-  floatingBtn.innerHTML = '⚡';
-  floatingBtn.setAttribute('aria-label', 'Push solution to GitHub');
-
-  floatingBtn.addEventListener('click', async () => {
-    console.log('[GitGrind] Manual push triggered');
-    if (isProcessing) return;
-
-    const payload = extractSolutionData();
-    if (!payload || !payload.code) {
-      showToast('⚠️ No code found. Solve a problem first!', 'warn');
-      return;
-    }
-
-    isProcessing = true;
-    floatingBtn.classList.add('gg-btn-loading');
-    showToast('⚡ Pushing to GitHub...', 'info');
-
-    try {
-      const settings = await sendMessage({ type: 'GET_SETTINGS' });
-      if (!settings.githubToken) {
-        showToast('⚙️ Set up GitGrind first! Click the extension icon.', 'warn');
-        return;
-      }
-
-      const result = await sendMessage({ type: 'PUSH_SOLUTION', payload });
-      if (result.success) {
-        showToast(`✅ Pushed! ${payload.title}`, 'success');
-        floatingBtn.classList.add('gg-btn-success');
-        setTimeout(() => floatingBtn.classList.remove('gg-btn-success'), 3000);
-      } else {
-        showToast(`❌ ${result.error || 'Push failed'}`, 'error');
-      }
-    } catch (err) {
-      showToast(`❌ ${err.message}`, 'error');
-    } finally {
-      isProcessing = false;
-      floatingBtn.classList.remove('gg-btn-loading');
-    }
-  });
-
-  document.body.appendChild(floatingBtn);
-  console.log('[GitGrind] Floating button injected');
+  btn.addEventListener('click', handleManualPush);
+  
+  // Always append to the end of the container to ensure it's on the far right of the group
+  container.appendChild(btn);
 }
+
+// ─────────────────────────────────────────
+// MESSAGE LISTENER
+// ─────────────────────────────────────────
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === 'MANUAL_PUSH') {
+    handleManualPush();
+    sendResponse({ success: true });
+  }
+});
 
 // ─────────────────────────────────────────
 // TOAST NOTIFICATIONS

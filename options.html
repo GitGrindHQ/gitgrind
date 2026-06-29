@@ -135,21 +135,21 @@
       <section class="section" id="section-ai">
         <div class="section-header">
           <h1>AI Features</h1>
-          <p>Powered by Google Gemini Flash (free tier — 15 req/min, 1M tokens/day).</p>
+          <p>Powered by Groq (Fastest open-source models).</p>
         </div>
 
         <div class="settings-card">
           <div class="field-group">
-            <label class="field-label">Gemini API Key</label>
-            <div class="field-desc"><a href="https://aistudio.google.com/app/apikey" target="_blank">Get a free key →</a></div>
+            <label class="field-label">Groq API Key</label>
+            <div class="field-desc"><a href="https://console.groq.com/keys" target="_blank">Get a free key →</a></div>
             <div class="input-wrap">
-              <input type="password" id="inp-gemini" class="text-input" placeholder="AIzaSy…" autocomplete="off" />
-              <button class="input-toggle" id="toggle-gemini">👁</button>
+              <input type="password" id="inp-groq" class="text-input" placeholder="gsk_..." autocomplete="off" />
+              <button class="input-toggle" id="toggle-groq">👁</button>
             </div>
           </div>
           <div class="field-actions">
-            <button class="btn btn-outline" id="btn-test-gemini">Test Gemini</button>
-            <div class="test-result" id="test-gemini-result" style="display:none"></div>
+            <button class="btn btn-outline" id="btn-test-groq">Test Groq</button>
+            <div class="test-result" id="test-groq-result" style="display:none"></div>
           </div>
         </div>
 
@@ -188,27 +188,76 @@
             <input type="text" id="inp-commit-template" class="text-input" placeholder="solve({difficulty}): {slug} | {topics}" />
           </div>
         </div>
+        
+        <div class="settings-card">
+          <div class="card-title">Repository README Generator</div>
+          <p class="field-desc" style="margin-bottom:16px">
+            Use AI to generate a beautiful, comprehensive README for your repository based on your solved problems.
+          </p>
+          <button class="btn btn-primary" id="btn-generate-readme" disabled title="Please configure your Groq API Key first">
+            🤖 Generate Repository README
+          </button>
+        </div>
       </section>
 
-      <!-- ── PREFERENCES SECTION ── -->
+    <!-- ── PREFERENCES SECTION ── -->
       <section class="section" id="section-preferences">
         <div class="section-header">
           <h1>Preferences</h1>
           <p>Customize how GitGrind behaves.</p>
         </div>
+        
+        <div class="settings-card">
+          <div class="card-title">Multiple Repository Views</div>
+          <div class="field-desc" style="margin-bottom:12px">
+            Enable multiple organizational structures simultaneously. A single solution will automatically appear in all selected views without duplicating Git storage.
+          </div>
+          <div class="toggle-list" id="repo-views-list">
+            <label class="toggle-row" style="cursor:pointer">
+              <div class="toggle-info"><div class="toggle-title">Platform</div><div class="toggle-desc">LeetCode / Medium / Two Sum</div></div>
+              <input type="checkbox" value="platform" class="repo-view-checkbox">
+            </label>
+            <label class="toggle-row" style="cursor:pointer">
+              <div class="toggle-info"><div class="toggle-title">Topic Wise</div><div class="toggle-desc">Topics / Array / Two Sum</div></div>
+              <input type="checkbox" value="topic" class="repo-view-checkbox">
+            </label>
+            <label class="toggle-row" style="cursor:pointer">
+              <div class="toggle-info"><div class="toggle-title">Company Wise</div><div class="toggle-desc">Companies / Amazon / Two Sum</div></div>
+              <input type="checkbox" value="company" class="repo-view-checkbox">
+            </label>
+            <label class="toggle-row" style="cursor:pointer">
+              <div class="toggle-info"><div class="toggle-title">Language Wise</div><div class="toggle-desc">Languages / C++ / Two Sum</div></div>
+              <input type="checkbox" value="language" class="repo-view-checkbox">
+            </label>
+            <label class="toggle-row" style="cursor:pointer">
+              <div class="toggle-info"><div class="toggle-title">Interview Sheets</div><div class="toggle-desc">Interview-Sheets / Blind 75 / Two Sum</div></div>
+              <input type="checkbox" value="sheet" class="repo-view-checkbox">
+            </label>
+            <label class="toggle-row" style="cursor:pointer">
+              <div class="toggle-info"><div class="toggle-title">Contest Wise</div><div class="toggle-desc">Contests / Weekly Contest 412 / Two Sum</div></div>
+              <input type="checkbox" value="contest" class="repo-view-checkbox">
+            </label>
+            <label class="toggle-row" style="cursor:pointer">
+              <div class="toggle-info"><div class="toggle-title">Flat Structure</div><div class="toggle-desc">0001-two-sum</div></div>
+              <input type="checkbox" value="flat" class="repo-view-checkbox">
+            </label>
+          </div>
+        </div>
+
         <div class="settings-card">
           <div class="card-title">Behavior</div>
-          <div class="toggle-list">
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-title">Auto-push on Accept</div>
-                <div class="toggle-desc">Automatically push when LeetCode shows "Accepted"</div>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-auto-push" />
-                <span class="toggle-thumb"></span>
-              </label>
+          <div class="field-group" style="margin-bottom:16px">
+            <label class="field-label">Daily Goal (Problems)</label>
+            <div class="input-wrap">
+              <select id="sel-daily-goal" class="text-input" style="cursor: pointer; appearance: auto;">
+                <option value="1">1 problem/day</option>
+                <option value="3">3 problems/day</option>
+                <option value="5">5 problems/day</option>
+                <option value="10">10 problems/day</option>
+              </select>
             </div>
+          </div>
+          <div class="toggle-list">
             <div class="toggle-row">
               <div class="toggle-info">
                 <div class="toggle-title">Show LinkedIn Button</div>
@@ -254,6 +303,32 @@
       <div class="save-bar" id="save-bar" style="display:none">
         <span class="save-hint">Unsaved changes</span>
         <button class="btn btn-primary" id="btn-save">Save Changes</button>
+      </div>
+
+      <!-- README Generator Modal -->
+      <div class="modal-overlay" id="readme-modal" style="display:none">
+        <div class="modal-content" style="max-width: 800px; height: 80vh;">
+          <div class="modal-header">
+            <h3 style="margin:0">🤖 Repository README</h3>
+            <button class="icon-btn" id="btn-close-readme" style="margin:0">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body" style="display:flex; flex-direction:column; gap:12px; height:100%;">
+            <div id="readme-loading" style="text-align:center; padding: 60px 20px; color: var(--text-muted); display:none;">
+              <div style="font-size:32px; margin-bottom: 16px; animation: spin 2s linear infinite;">⚙️</div>
+              Analyzing metadata index and generating README... This may take up to a minute.
+            </div>
+            <textarea id="readme-editor" class="text-input" style="flex:1; font-family: monospace; resize: none; display:none; padding:12px; line-height:1.5;"></textarea>
+          </div>
+          <div class="modal-footer" style="padding: 16px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; display:none;" id="readme-footer">
+            <button class="btn btn-outline" id="btn-regen-readme">Regenerate</button>
+            <button class="btn btn-primary" id="btn-publish-readme">Publish to GitHub</button>
+          </div>
+        </div>
       </div>
 
       <!-- Toast -->

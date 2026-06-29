@@ -159,19 +159,19 @@
 
       <div class="btn-row">
         <button class="btn btn-ghost" id="btn-back-github">← Back</button>
-        <button class="btn btn-primary" id="btn-next-gemini" disabled>Continue →</button>
+        <button class="btn btn-primary" id="btn-next-groq" disabled>Continue →</button>
       </div>
     </div>
   </div>
 
-  <!-- ─── STEP 4: GEMINI AI (OPTIONAL) ─── -->
-  <div class="step" id="step-gemini">
+  <!-- ─── STEP 4: GROQ AI (OPTIONAL) ─── -->
+  <div class="step" id="step-groq">
     <div class="card">
       <div class="step-header">
         <div class="step-badge">Step 3 of 3</div>
         <div class="step-icon">🤖</div>
         <h2>Enable AI Features</h2>
-        <p class="step-desc">Add your free Gemini API key to unlock AI commit messages, code comments, and "Roast my solution".</p>
+        <p class="step-desc">Add your free Groq API key to unlock AI commit messages, code comments, and "Roast my solution".</p>
       </div>
 
       <div class="ai-features-preview">
@@ -198,18 +198,18 @@
         </div>
       </div>
 
-      <a class="btn btn-outline btn-sm" href="https://aistudio.google.com/app/apikey" target="_blank" style="margin-bottom:16px;display:inline-flex">
-        🔑 Get Free Gemini API Key →
+      <a class="btn btn-outline btn-sm" href="https://console.groq.com/keys" target="_blank" style="margin-bottom:16px;display:inline-flex">
+        🔑 Get Free Groq API Key →
       </a>
 
       <div class="input-group">
         <label class="input-label">
-          Gemini API Key
+          Groq API Key
           <span class="optional-badge">Optional</span>
         </label>
         <div class="input-wrap">
-          <input type="password" id="input-gemini" class="text-input" placeholder="AIzaSy…" autocomplete="off" />
-          <button class="input-toggle" id="btn-toggle-gemini" title="Show/hide key">
+          <input type="password" id="input-groq" class="text-input" placeholder="gsk_..." autocomplete="off" />
+          <button class="input-toggle" id="btn-toggle-groq" title="Show/hide key">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
             </svg>
@@ -217,14 +217,14 @@
         </div>
       </div>
 
-      <div class="gemini-status" id="gemini-status" style="display:none"></div>
-      <div class="error-msg" id="error-gemini" style="display:none"></div>
+      <div class="gemini-status" id="groq-status" style="display:none"></div>
+      <div class="error-msg" id="error-groq" style="display:none"></div>
 
       <div class="btn-row">
-        <button class="btn btn-ghost" id="btn-skip-gemini">Skip for now</button>
-        <button class="btn btn-primary" id="btn-verify-gemini">
-          <span id="gemini-verify-text">Verify &amp; Finish</span>
-          <span class="spinner" id="gemini-spinner" style="display:none"></span>
+        <button class="btn btn-ghost" id="btn-skip-groq">Skip for now</button>
+        <button class="btn btn-primary" id="btn-verify-groq">
+          <span id="groq-verify-text">Verify &amp; Finish</span>
+          <span class="spinner" id="groq-spinner" style="display:none"></span>
         </button>
       </div>
     </div>

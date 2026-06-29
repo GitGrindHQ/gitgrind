@@ -17,7 +17,7 @@ const state = {
   githubToken: null,
   githubUser:  null,    // { login, name, avatar_url, public_repos }
   selectedRepo: null,
-  geminiKey:    null,
+  groqKey:      null,
   repos:        [],
 };
 
@@ -44,7 +44,7 @@ function goToStep(stepName, direction = 'right') {
 
   // Progress dots
   const dots    = document.getElementById('progress-dots');
-  const STEPS   = ['github', 'repo', 'gemini', 'done'];
+  const STEPS   = ['github', 'repo', 'groq', 'done'];
   const stepIdx = STEPS.indexOf(stepName);
 
   if (stepName === 'welcome' || stepName === 'done') {
@@ -81,8 +81,8 @@ function setupEventListeners() {
 
   // ── Repo step ──
   document.getElementById('btn-back-github').addEventListener('click', () => goToStep('github', 'left'));
-  document.getElementById('btn-next-gemini').addEventListener('click', () => {
-    if (state.selectedRepo) goToStep('gemini');
+  document.getElementById('btn-next-groq').addEventListener('click', () => {
+    if (state.selectedRepo) goToStep('groq');
   });
   document.getElementById('btn-deselect-repo').addEventListener('click', () => {
     state.selectedRepo = null;
@@ -95,13 +95,13 @@ function setupEventListeners() {
   document.getElementById('btn-create-repo').addEventListener('click', createNewRepo);
   document.getElementById('repo-search').addEventListener('input', e => filterRepos(e.target.value));
 
-  // ── Gemini step ──
-  document.getElementById('btn-toggle-gemini').addEventListener('click', () => {
-    const inp = document.getElementById('input-gemini');
+  // ── Groq step ──
+  document.getElementById('btn-toggle-groq').addEventListener('click', () => {
+    const inp = document.getElementById('input-groq');
     inp.type  = inp.type === 'password' ? 'text' : 'password';
   });
-  document.getElementById('btn-skip-gemini').addEventListener('click', () => saveAndFinish());
-  document.getElementById('btn-verify-gemini').addEventListener('click', verifyGeminiKey);
+  document.getElementById('btn-skip-groq').addEventListener('click', () => saveAndFinish());
+  document.getElementById('btn-verify-groq').addEventListener('click', verifyGroqKey);
 
   // ── Done step ──
   document.getElementById('btn-finish').addEventListener('click', () => window.close());
@@ -308,7 +308,7 @@ function filterRepos(query) {
 
 function updateRepoSelection() {
   const bar     = document.getElementById('selected-repo-bar');
-  const nextBtn = document.getElementById('btn-next-gemini');
+  const nextBtn = document.getElementById('btn-next-groq');
   const nameEl  = document.getElementById('selected-repo-name');
 
   document.querySelectorAll('.repo-item').forEach(item => {
@@ -355,34 +355,34 @@ async function createNewRepo() {
 }
 
 // ─────────────────────────────────────────
-// GEMINI STEP
+// GROQ STEP
 // ─────────────────────────────────────────
 
-async function verifyGeminiKey() {
-  const key = document.getElementById('input-gemini').value.trim();
+async function verifyGroqKey() {
+  const key = document.getElementById('input-groq').value.trim();
   if (!key) { saveAndFinish(); return; }
 
-  setLoading('btn-verify-gemini', 'gemini-verify-text', 'gemini-spinner', 'Verifying…', true);
-  document.getElementById('error-gemini').style.display = 'none';
+  setLoading('btn-verify-groq', 'groq-verify-text', 'groq-spinner', 'Verifying…', true);
+  document.getElementById('error-groq').style.display = 'none';
 
   try {
-    const result = await sendMessage({ type: 'VALIDATE_GEMINI_KEY', key });
+    const result = await sendMessage({ type: 'VALIDATE_GROQ_KEY', key });
     if (result.success) {
-      state.geminiKey = key;
-      document.getElementById('input-gemini').classList.add('valid');
-      document.getElementById('gemini-status').style.display   = 'block';
-      document.getElementById('gemini-status').textContent = '✅ Gemini AI activated!';
+      state.groqKey = key;
+      document.getElementById('input-groq').classList.add('valid');
+      document.getElementById('groq-status').style.display   = 'block';
+      document.getElementById('groq-status').textContent = '✅ Groq AI activated!';
       setTimeout(() => saveAndFinish(), 1000);
     } else {
       throw new Error(result.error || 'Invalid key');
     }
   } catch (err) {
-    document.getElementById('input-gemini').classList.add('invalid');
-    const el = document.getElementById('error-gemini');
+    document.getElementById('input-groq').classList.add('invalid');
+    const el = document.getElementById('error-groq');
     el.textContent = `❌ ${err.message}`;
     el.style.display = 'block';
   } finally {
-    setLoading('btn-verify-gemini', 'gemini-verify-text', 'gemini-spinner', 'Verify & Finish', false);
+    setLoading('btn-verify-groq', 'groq-verify-text', 'groq-spinner', 'Verify & Finish', false);
   }
 }
 
@@ -396,8 +396,9 @@ async function saveAndFinish() {
   const newSettings = {
     ...currentSettings,
     repoFullName:      state.selectedRepo?.full_name || null,
-    geminiKey:         state.geminiKey || null,
-    aiCommitMessages:  !!state.geminiKey,
+    geminiKey:         null,
+    groqKey:           state.groqKey || null,
+    aiCommitMessages:  !!state.groqKey,
     addCodeComments:   false,
     autoPush:          true,
     showLinkedIn:      true,
@@ -416,7 +417,7 @@ async function setupDoneStep() {
   const settings = await sendMessage({ type: 'GET_SETTINGS' });
   document.getElementById('summary-user').textContent = `@${settings.githubUser || 'Unknown'}`;
   document.getElementById('summary-repo').textContent = settings.repoFullName   || '—';
-  document.getElementById('summary-ai').textContent   = settings.geminiKey ? '✅ Enabled (Gemini)' : '❌ Not configured';
+  document.getElementById('summary-ai').textContent   = settings.groqKey ? '✅ Enabled (Groq)' : '❌ Not configured';
   setTimeout(() => fireConfetti(), 250);
 }
 

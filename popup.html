@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GitGrind</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="popup.css" />
 </head>
+
 <body>
 
   <!-- ─── HEADER ─── -->
@@ -20,8 +23,9 @@
     <div class="header-actions">
       <button class="icon-btn" id="btn-settings" title="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
       </button>
     </div>
@@ -46,8 +50,19 @@
         <span class="streak-label">day streak</span>
       </div>
       <div class="streak-right">
-        <div class="streak-sub" id="this-week">0 this week</div>
+        <div class="streak-sub" id="streak-longest">0 longest</div>
         <div class="streak-sub" id="this-month">0 this month</div>
+      </div>
+    </div>
+
+    <!-- Daily Goal Banner -->
+    <div class="goal-banner" id="goal-banner" style="display:none">
+      <div class="goal-header">
+        <span class="goal-title">Today's Goal</span>
+        <span class="goal-text" id="goal-text">0 / 5 Problems</span>
+      </div>
+      <div class="goal-bar">
+        <div class="goal-bar-fill" id="goal-bar-fill"></div>
       </div>
     </div>
 
@@ -60,17 +75,23 @@
       <div class="stat-card stat-easy">
         <div class="stat-value" id="stat-easy">0</div>
         <div class="stat-label">Easy</div>
-        <div class="stat-bar"><div class="stat-bar-fill easy" id="bar-easy"></div></div>
+        <div class="stat-bar">
+          <div class="stat-bar-fill easy" id="bar-easy"></div>
+        </div>
       </div>
       <div class="stat-card stat-medium">
         <div class="stat-value" id="stat-medium">0</div>
         <div class="stat-label">Medium</div>
-        <div class="stat-bar"><div class="stat-bar-fill medium" id="bar-medium"></div></div>
+        <div class="stat-bar">
+          <div class="stat-bar-fill medium" id="bar-medium"></div>
+        </div>
       </div>
       <div class="stat-card stat-hard">
         <div class="stat-value" id="stat-hard">0</div>
         <div class="stat-label">Hard</div>
-        <div class="stat-bar"><div class="stat-bar-fill hard" id="bar-hard"></div></div>
+        <div class="stat-bar">
+          <div class="stat-bar-fill hard" id="bar-hard"></div>
+        </div>
       </div>
     </div>
 
@@ -101,12 +122,14 @@
       <button class="btn btn-primary btn-action" id="btn-push-now">
         ⚡ Push Now
       </button>
-      <button class="btn btn-outline btn-action" id="btn-roast" style="display:none; border-color: #f43f5e; color: #f43f5e;">
+      <button class="btn btn-outline btn-action" id="btn-roast"
+        style="display:none; border-color: #f43f5e; color: #f43f5e;">
         🔥 Roast
       </button>
       <button class="btn btn-linkedin btn-action" id="btn-linkedin" style="display:none">
         <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/>
+          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z" />
+          <circle cx="4" cy="4" r="2" />
         </svg>
         LinkedIn
       </button>
@@ -118,15 +141,17 @@
       <span class="repo-bar-name" id="repo-bar-name">Not configured</span>
       <a class="repo-bar-link" id="repo-bar-link" href="#" target="_blank" title="Open on GitHub">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
         </svg>
       </a>
     </div>
 
     <!-- Footer Links -->
     <div style="text-align: center; margin-top: 12px;">
-      <a href="https://github.com/GitGrindHQ/gitgrind/issues" target="_blank" style="color: #8b949e; text-decoration: none; font-size: 11px;">🐛 Report a Bug / Request Feature</a>
+      <a href="https://github.com/GitGrindHQ/gitgrind/issues" target="_blank"
+        style="color: #8b949e; text-decoration: none; font-size: 11px;">🐛 Report a Bug / Request Feature</a>
     </div>
   </div>
 
@@ -149,9 +174,11 @@
   </div>
 
   <!-- Confetti canvas -->
-  <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;"></canvas>
+  <canvas id="confetti-canvas"
+    style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;"></canvas>
 
   <script src="lib/confetti.js"></script>
   <script src="popup.js"></script>
 </body>
+
 </html>

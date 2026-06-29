@@ -61,21 +61,33 @@ async function loadSettings() {
     document.getElementById('current-repo-display').textContent = currentSettings.repoFullName;
   }
 
-  // ── Gemini ──
-  if (currentSettings.geminiKey) {
-    document.getElementById('inp-gemini').value = currentSettings.geminiKey;
-    document.getElementById('inp-gemini').classList.add('valid');
+  // ── Groq ──
+  if (currentSettings.groqKey) {
+    document.getElementById('inp-groq').value = currentSettings.groqKey;
+    document.getElementById('inp-groq').classList.add('valid');
+  }
+
+  // ── Repo Views ──
+  const views = currentSettings.repoViews || ['platform'];
+  document.querySelectorAll('.repo-view-checkbox').forEach(cb => {
+    cb.checked = views.includes(cb.value);
+  });
+  
+  // ── Daily Goal ──
+  if (currentSettings.dailyGoal) {
+    document.getElementById('sel-daily-goal').value = currentSettings.dailyGoal.toString();
   }
 
   // ── Toggles ──
   document.getElementById('toggle-ai-commits').checked = !!currentSettings.aiCommitMessages;
   document.getElementById('toggle-ai-comments').checked = !!currentSettings.addCodeComments;
-  document.getElementById('toggle-auto-push').checked   = currentSettings.autoPush !== false;
   document.getElementById('toggle-linkedin').checked    = currentSettings.showLinkedIn !== false;
 
   // ── Commit template ──
   document.getElementById('inp-commit-template').value =
     currentSettings.commitTemplate || 'solve({difficulty}): {slug} | {topics}';
+
+  checkReadmeButton(currentSettings);
 }
 
 function showConnectedState(settings) {
@@ -141,21 +153,28 @@ function setupEventListeners() {
   document.getElementById('btn-save-repo').addEventListener('click', saveRepo);
   document.getElementById('repo-browser-search').addEventListener('input', e => filterRepoBrowser(e.target.value));
 
-  // ── Gemini section ──
-  document.getElementById('toggle-gemini').addEventListener('click', () => {
-    const inp = document.getElementById('inp-gemini');
+  // ── Groq section ──
+  document.getElementById('toggle-groq').addEventListener('click', () => {
+    const inp = document.getElementById('inp-groq');
     inp.type  = inp.type === 'password' ? 'text' : 'password';
   });
-  document.getElementById('btn-test-gemini').addEventListener('click', testGemini);
+  document.getElementById('btn-test-groq').addEventListener('click', testGroq);
+
+  // ── README Generator ──
+  document.getElementById('btn-generate-readme').addEventListener('click', () => startReadmeGeneration());
+  document.getElementById('btn-close-readme').addEventListener('click', closeReadmeModal);
+  document.getElementById('btn-regen-readme').addEventListener('click', () => startReadmeGeneration(true));
+  document.getElementById('btn-publish-readme').addEventListener('click', publishReadme);
 
   // ── Mark dirty ──
-  const watchIds = ['inp-gemini', 'inp-commit-template',
-    'toggle-ai-commits', 'toggle-ai-comments', 'toggle-auto-push', 'toggle-linkedin'];
+  const watchIds = ['inp-groq', 'inp-commit-template',
+    'toggle-ai-commits', 'toggle-ai-comments', 'toggle-linkedin', 'sel-daily-goal'];
   watchIds.forEach(id => {
     const el = document.getElementById(id);
     el?.addEventListener('input',  markDirty);
     el?.addEventListener('change', markDirty);
   });
+  document.querySelectorAll('.repo-view-checkbox').forEach(cb => cb.addEventListener('change', markDirty));
 
   // ── Save ──
   document.getElementById('btn-save').addEventListener('click', saveAllSettings);
@@ -234,6 +253,63 @@ async function disconnectGitHub() {
 // ─────────────────────────────────────────
 // REPO BROWSER
 // ─────────────────────────────────────────
+
+// ─────────────────────────────────────────
+// README GENERATOR
+// ─────────────────────────────────────────
+
+function checkReadmeButton(settings) {
+  const btn = document.getElementById('btn-generate-readme');
+  if (settings.groqKey && settings.githubToken && settings.repoFullName) {
+    btn.disabled = false;
+    btn.title = '';
+  } else {
+    btn.disabled = true;
+    btn.title = 'Please configure GitHub and Groq API Key first';
+  }
+}
+
+function startReadmeGeneration(isRegen = false) {
+  document.getElementById('readme-modal').style.display = 'flex';
+  document.getElementById('readme-loading').style.display = 'block';
+  document.getElementById('readme-editor').style.display = 'none';
+  document.getElementById('readme-footer').style.display = 'none';
+
+  chrome.runtime.sendMessage({ type: 'GENERATE_README' }, (res) => {
+    document.getElementById('readme-loading').style.display = 'none';
+    if (res && res.success) {
+      document.getElementById('readme-editor').value = res.readme;
+      document.getElementById('readme-editor').style.display = 'block';
+      document.getElementById('readme-footer').style.display = 'flex';
+    } else {
+      showToast('Error generating README: ' + (res?.error || 'Unknown error'), true);
+      closeReadmeModal();
+    }
+  });
+}
+
+function closeReadmeModal() {
+  document.getElementById('readme-modal').style.display = 'none';
+}
+
+function publishReadme() {
+  const content = document.getElementById('readme-editor').value;
+  const btn = document.getElementById('btn-publish-readme');
+  btn.disabled = true;
+  btn.textContent = 'Publishing...';
+
+  chrome.runtime.sendMessage({ type: 'PUBLISH_README', content }, (res) => {
+    btn.disabled = false;
+    btn.textContent = 'Publish to GitHub';
+    if (res && res.success) {
+      showToast('README successfully published to GitHub!');
+      closeReadmeModal();
+    } else {
+      showToast('Error publishing README: ' + (res?.error || 'Unknown error'), true);
+    }
+  });
+}
+
 async function toggleRepoBrowser() {
   const browser = document.getElementById('repo-browser');
   if (browser.style.display !== 'none') {
@@ -298,30 +374,30 @@ async function saveRepo() {
 }
 
 // ─────────────────────────────────────────
-// GEMINI TEST
+// GROQ TEST
 // ─────────────────────────────────────────
-async function testGemini() {
-  const key      = document.getElementById('inp-gemini').value.trim();
-  const resultEl = document.getElementById('test-gemini-result');
+async function testGroq() {
+  const key      = document.getElementById('inp-groq').value.trim();
+  const resultEl = document.getElementById('test-groq-result');
   if (!key) { showTestResult(resultEl, '❌ Enter a key first', 'error'); return; }
 
-  const btn       = document.getElementById('btn-test-gemini');
+  const btn       = document.getElementById('btn-test-groq');
   btn.textContent = 'Testing…';
   btn.disabled    = true;
 
   try {
-    const result = await sendMessage({ type: 'VALIDATE_GEMINI_KEY', key });
+    const result = await sendMessage({ type: 'VALIDATE_GROQ_KEY', key });
     if (result.success) {
-      document.getElementById('inp-gemini').classList.add('valid');
-      showTestResult(resultEl, '✅ Gemini is working!', 'success');
+      document.getElementById('inp-groq').classList.add('valid');
+      showTestResult(resultEl, '✅ Groq is working!', 'success');
     } else {
       throw new Error(result.error);
     }
   } catch (err) {
-    document.getElementById('inp-gemini').classList.add('invalid');
+    document.getElementById('inp-groq').classList.add('invalid');
     showTestResult(resultEl, `❌ ${err.message}`, 'error');
   } finally {
-    btn.textContent = 'Test Gemini';
+    btn.textContent = 'Test Groq';
     btn.disabled    = false;
   }
 }
@@ -335,12 +411,15 @@ function markDirty() {
 }
 
 async function saveAllSettings() {
+  const views = Array.from(document.querySelectorAll('.repo-view-checkbox:checked')).map(cb => cb.value);
+
   const settings = {
     ...currentSettings,
-    geminiKey:        document.getElementById('inp-gemini').value.trim() || null,
+    groqKey:          document.getElementById('inp-groq').value.trim() || null,
+    repoViews:        views.length > 0 ? views : ['platform'],
+    dailyGoal:        parseInt(document.getElementById('sel-daily-goal').value, 10) || 5,
     aiCommitMessages: document.getElementById('toggle-ai-commits').checked,
     addCodeComments:  document.getElementById('toggle-ai-comments').checked,
-    autoPush:         document.getElementById('toggle-auto-push').checked,
     showLinkedIn:     document.getElementById('toggle-linkedin').checked,
     commitTemplate:   document.getElementById('inp-commit-template').value.trim() ||
       'solve({difficulty}): {slug} | {topics}'
